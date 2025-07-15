@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import plotly.graph_objects as go
 import altair as alt
 import plotly.express as px
 import datetime
@@ -105,16 +106,20 @@ def main():
         else:
             df_filtered = df
 
-        stage_list = list(df['stage'].unique())
+        stage_list = list(df_filtered['stage'].unique())
         stage_list.append('All')
         selected_stage = st.selectbox('Stage', stage_list, index=len(stage_list)-1)
         if selected_stage != 'All':
             df_filtered = df_filtered[df_filtered['stage'] == selected_stage]
+            
+        if len(df_filtered)==0:
+            st.markdown('Data not available. Please reset the filters')
+            
         st.markdown('Data refreshed less than an hour ago')
         
         with st.expander('About', expanded=True):
             st.write('''
-                - :orange[**Data**]: Synthetic sample data generated for demo, refreshed every hour.
+                - :orange[**Data**]: Sample data generated for demo purposes.
                 - :orange[**Reliability %**]: ((Total transactions - Failed transactions)/Total transactions)*100
                 ''')
 
@@ -154,37 +159,39 @@ def main():
             failure_df = df[df['status']=='failure']
             if selected_stage != 'All':
                 failure_df = failure_df[failure_df['stage'] == selected_stage]
-            failure_date_group = failure_df.groupby(['date','failure_reason'])['txn_id'].count().reset_index()
-            cutoff = failure_date_group['date'].max() - timedelta(days=30)
-            df_last_30_days = failure_date_group[failure_date_group['date'] >= cutoff]
-            df_last_30_days['date'] = pd.to_datetime(df_last_30_days['date']).dt.strftime('%Y-%m-%d')
-            st.markdown("#### 30 Day Failure Heatmap")
-            heatmap = make_heatmap(df_last_30_days, 'date', 'failure_reason', 'txn_id')
-            st.altair_chart(heatmap, use_container_width=True)
+            if len(failure_df) != 0:
+                failure_date_group = failure_df.groupby(['date','failure_reason'])['txn_id'].count().reset_index()
+                cutoff = failure_date_group['date'].max() - timedelta(days=30)
+                df_last_30_days = failure_date_group[failure_date_group['date'] >= cutoff]
+                df_last_30_days['date'] = pd.to_datetime(df_last_30_days['date']).dt.strftime('%Y-%m-%d')
+                st.markdown("#### 30 Day Failure Heatmap")
+                heatmap = make_heatmap(df_last_30_days, 'date', 'failure_reason', 'txn_id')
+                st.altair_chart(heatmap, use_container_width=True)
     with col[1]:
         with st.container(border=True):
             failure_df = df[df['status']=='failure']
             if selected_stage != 'All':
                 failure_df = failure_df[failure_df['stage'] == selected_stage]
-            failure_group = failure_df.groupby('failure_reason')['txn_id'].count().reset_index()
-            failure_group.rename(columns={'txn_id': 'failures'}, inplace=True)
-            st.markdown("#### Failure Reasons Distribution")
-            fig = px.pie(
-                failure_group,
-                values='failures',
-                names='failure_reason',
-                title='',
-                color_discrete_sequence=px.colors.qualitative.Set2
-            )
-            fig.update_layout(
-            legend=dict(
-                orientation='h',  
-                yanchor='top',    
-                y=-0.3,           
-                xanchor='center', 
-                x=0.5             
-            ))
-            st.plotly_chart(fig, use_container_width=True)
+            if len(failure_df) != 0:
+                failure_group = failure_df.groupby('failure_reason')['txn_id'].count().reset_index()
+                failure_group.rename(columns={'txn_id': 'failures'}, inplace=True)
+                st.markdown("#### Failure Reasons Distribution")
+                fig = px.pie(
+                    failure_group,
+                    values='failures',
+                    names='failure_reason',
+                    title='',
+                    color_discrete_sequence=px.colors.qualitative.Set2
+                )
+                fig.update_layout(
+                legend=dict(
+                    orientation='h',  
+                    yanchor='top',    
+                    y=-0.3,           
+                    xanchor='center', 
+                    x=0.5             
+                ))
+                st.plotly_chart(fig, use_container_width=True)
         with st.container(border=True):   
             partner_group = df_filtered.groupby('partner')['latency_ms'].mean().reset_index()
             partner_group.rename(columns={'latency_ms': 'latency'}, inplace=True)
@@ -198,11 +205,11 @@ def main():
                 title='')
             st.plotly_chart(fig, use_container_width=True)
            
-    df_new = generate_transactions(n=1)
-    print('df_new')
-    print(df_new)
-    df = pd.concat([df, df_new], ignore_index=True)
-    df.to_csv('transactions_last_3_months.csv')
-    time.sleep(3600)
-    st.rerun()
+#     df_new = generate_transactions(n=1)
+#     print('df_new')
+#     print(df_new)
+#     df = pd.concat([df, df_new], ignore_index=True)
+#     df.to_csv('transactions_last_3_months.csv')
+#     time.sleep(3600)
+#     st.rerun()
 main()
