@@ -17,6 +17,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded")
 
+alt.themes.enable("dark")
+
 st.markdown('Scroll below for failure heatmap and avg latency for each partner')
 
 def generate_transactions(n=1):
