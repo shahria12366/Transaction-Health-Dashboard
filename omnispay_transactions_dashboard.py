@@ -17,9 +17,40 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded")
 
-alt.themes.enable("dark")
-
 st.markdown('Scroll below for failure heatmap and avg latency for each partner')
+
+hide_streamlit_style = """
+                <style>
+                div[data-testid="stToolbar"] {
+                visibility: hidden;
+                height: 0%;
+                position: fixed;
+                }
+                div[data-testid="stDecoration"] {
+                visibility: hidden;
+                height: 0%;
+                position: fixed;
+                }
+                div[data-testid="stStatusWidget"] {
+                visibility: hidden;
+                height: 0%;
+                position: fixed;
+                }
+                #MainMenu {
+                visibility: hidden;
+                height: 0%;
+                }
+                header {
+                visibility: hidden;
+                height: 0%;
+                }
+                footer {
+                visibility: hidden;
+                height: 0%;
+                }
+                </style>
+                """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
 
 def generate_transactions(n=1):
     print('inside generate transactions')
@@ -117,13 +148,14 @@ def main():
         if len(df_filtered)==0:
             st.markdown('Data not available. Please reset the filters')
             
-        st.markdown('Data refreshed less than an hour ago')
+        st.markdown('Data refreshed less than a minute ago')
         
         with st.expander('About', expanded=True):
             st.write('''
                 - :orange[**Data**]: Sample data generated for demo purposes.
                 - :orange[**Reliability %**]: ((Total transactions - Failed transactions)/Total transactions)*100
                 ''')
+        
 
     total_trans, failed_trans = kpi_calc(df_filtered)
     reliability_val = round(((total_trans-failed_trans)/total_trans)*100,1)
@@ -206,14 +238,15 @@ def main():
                 labels={'partner': 'Partner', 'latency': 'Avg Latency (seconds)'},
                 title='')
             st.plotly_chart(fig, use_container_width=True)
-    time.sleep(120)
+            
+    if "last_run" not in st.session_state:
+        st.session_state.last_run = dt.now()
+    # Check if 2 hours have passed to update new data
+    if dt.now() - st.session_state.last_run >= timedelta(minutes=60):
+        df_new = generate_transactions(n=1)
+        df = pd.concat([df, df_new], ignore_index=True)
+        df.to_csv('transactions_last_3_months.csv')
+        st.session_state.last_run = dt.now()       
+    time.sleep(60)
     st.rerun()
-           
-#     df_new = generate_transactions(n=1)
-#     print('df_new')
-#     print(df_new)
-#     df = pd.concat([df, df_new], ignore_index=True)
-#     df.to_csv('transactions_last_3_months.csv')
-#     time.sleep(3600)
-#     st.rerun()
 main()
