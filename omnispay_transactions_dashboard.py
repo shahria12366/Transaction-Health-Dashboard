@@ -206,6 +206,8 @@ def main():
                 labels={'partner': 'Partner', 'latency': 'Avg Latency (seconds)'},
                 title='')
             st.plotly_chart(fig, use_container_width=True)
+    time.sleep(120)
+    st.rerun()
            
 #     df_new = generate_transactions(n=1)
 #     print('df_new')
