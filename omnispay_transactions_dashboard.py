@@ -75,11 +75,15 @@ def generate_transactions(n=1):
             latency = random.randint(500, 1200)
         else:  # success
             latency = random.randint(100, 600)
+            
+        # Generate a random timestamp within today
+        random_minutes = random.randint(0, now.hour * 60 + now.minute)  # up to current time
+        timestamp = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(minutes=random_minutes)
 
         # Timestamp spread over last 3 months
-        random_days = random.randint(0, 0)
-        random_minutes = random.randint(0, 1440)
-        timestamp = now - timedelta(days=random_days, minutes=random_minutes)
+#         random_days = random.randint(0, 0)
+#         random_minutes = random.randint(0, 1440)
+#         timestamp = now - timedelta(days=random_days, minutes=random_minutes)
 
         txn = {
             'txn_id': f'TX{i+1:05}',
