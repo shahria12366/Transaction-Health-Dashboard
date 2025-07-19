@@ -133,7 +133,7 @@ def make_heatmap(input_df, input_y, input_x, input_color):
 def main():
     df = pd.read_csv('transactions_last_3_months.csv')
     with st.sidebar:
-        st.title('Real-Time Transaction Health Dashboard')
+        st.title('Transaction Health Dashboard')
 
         status_list = list(df['status'].unique())
         status_list.append('All')
